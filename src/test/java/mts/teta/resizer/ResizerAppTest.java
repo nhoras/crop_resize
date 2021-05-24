@@ -10,7 +10,6 @@ import java.io.File;
 import java.net.URL;
 import java.nio.file.Paths;
 
-import static mts.teta.resizer.utils.MD5.getMD5;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class ResizerAppTest {
@@ -84,6 +83,63 @@ class ResizerAppTest {
         assertEquals(reducedPreview.getHeight(), reducedPreviewHeight);
     }
 
+    @Test
+    public void testCropCover() throws Exception {
+        final Integer cropX = 100;
+        final Integer cropY = 200;
+        final Integer cropWidth = 400;
+        final Integer cropHeight = 600;
+
+        URL res = getClass().getClassLoader().getResource(BOOK_COVER_SOURCE_NAME);
+        assert res != null;
+
+        File file = Paths.get(res.toURI()).toFile();
+        String absolutePathInput = file.getAbsolutePath();
+
+        String absolutePathOutput = absolutePathInput.replaceFirst(BOOK_COVER_SOURCE_NAME, BOOK_COVER_TARGET_NAME);
+
+        ResizerApp app = new ResizerApp();
+        app.setInputFile(new File(absolutePathInput));
+        app.setOutputFile(new File(absolutePathOutput));
+        app.setCropParams(cropWidth, cropHeight, cropX, cropY);
+        app.call();
+
+        BufferedImage reducedPreview = ImageIO.read(new File(absolutePathOutput));
+
+        assertEquals(reducedPreview.getWidth(), cropWidth);
+        assertEquals(reducedPreview.getHeight(), cropHeight);
+    }
+
+    @Test
+    public void testCropAndResizeCover() throws Exception {
+        final Integer cropX = 100;
+        final Integer cropY = 200;
+        final Integer cropWidth = 400;
+        final Integer cropHeight = 600;
+        final Integer reducedPreviewWidth = BOOK_COVER_WIDTH;
+        final Integer reducedPreviewHeight = BOOK_COVER_HEIGHT;
+
+        URL res = getClass().getClassLoader().getResource(BOOK_COVER_SOURCE_NAME);
+        assert res != null;
+
+        File file = Paths.get(res.toURI()).toFile();
+        String absolutePathInput = file.getAbsolutePath();
+
+        String absolutePathOutput = absolutePathInput.replaceFirst(BOOK_COVER_SOURCE_NAME, BOOK_COVER_TARGET_NAME);
+
+        ResizerApp app = new ResizerApp();
+        app.setInputFile(new File(absolutePathInput));
+        app.setOutputFile(new File(absolutePathOutput));
+        app.setResizeHeight(reducedPreviewHeight);
+        app.setResizeWidth(reducedPreviewWidth);
+        app.setCropParams(cropWidth, cropHeight, cropX, cropY);
+        app.call();
+
+        BufferedImage reducedPreview = ImageIO.read(new File(absolutePathOutput));
+
+        assertEquals(reducedPreview.getWidth(), reducedPreviewWidth);
+        assertEquals(reducedPreview.getHeight(), reducedPreviewHeight);
+    }
 // Отказ от тестов с MD5
 // Тестирование проверки изображений это комплексная задача и сводить её к сверке MD5 нельзя.
 // Мета-информация, различные функции и параметры они все изменяют значение хеш-суммы. Хотя визуально оно будет точь-в-точь.
@@ -210,6 +266,110 @@ class ResizerAppTest {
         }
 
         assertEquals("Please check params!", generatedException.getMessage());
+        assertEquals(BadAttributesException.class, generatedException.getClass());
+    }
+
+    @Test
+    public void testNegativeResize() throws Exception {
+        final Integer reducedPreviewWidth = -AUDIO_COVER_WIDTH;
+        final Integer reducedPreviewHeight = -AUDIO_COVER_HEIGHT;
+
+        URL res = getClass().getClassLoader().getResource(AUDIO_COVER_SOURCE_NAME);
+        File file = Paths.get(res.toURI()).toFile();
+        String absolutePathInput = file.getAbsolutePath();
+
+        String absolutePathOutput = absolutePathInput.replaceFirst(AUDIO_COVER_SOURCE_NAME, AUDIO_COVER_TARGET_NAME);
+
+        ResizerApp app = new ResizerApp();
+        app.setInputFile(new File(absolutePathInput));
+        app.setOutputFile(new File(absolutePathOutput));
+        app.setResizeWidth(reducedPreviewWidth);
+        app.setResizeHeight(reducedPreviewHeight);
+        IllegalArgumentException generatedException = null;
+        try {
+            app.call();
+        } catch (IllegalArgumentException e) {
+            generatedException = e;
+        }
+
+        assertEquals("Destination image dimensions must not be less than 0 pixels.", generatedException.getMessage());
+        assertEquals(IllegalArgumentException.class, generatedException.getClass());
+    }
+
+    @Test
+    public void testWrongBlurParam() throws Exception {
+        final Integer blurRadius = 0;
+
+        URL res = getClass().getClassLoader().getResource(AUDIO_COVER_SOURCE_NAME);
+        File file = Paths.get(res.toURI()).toFile();
+        String absolutePathInput = file.getAbsolutePath();
+
+        String absolutePathOutput = absolutePathInput.replaceFirst(AUDIO_COVER_SOURCE_NAME, AUDIO_COVER_TARGET_NAME);
+
+        ResizerApp app = new ResizerApp();
+        app.setInputFile(new File(absolutePathInput));
+        app.setOutputFile(new File(absolutePathOutput));
+        app.setBlurRadius(blurRadius);
+        BadAttributesException generatedException = null;
+        try {
+            app.call();
+        } catch (BadAttributesException e) {
+            generatedException = e;
+        }
+
+        assertEquals("Blur radius can't be less than 1", generatedException.getMessage());
+        assertEquals(BadAttributesException.class, generatedException.getClass());
+    }
+
+    @Test
+    public void testCropOutOfImageSize() throws Exception {
+        final Integer cropX = 101;
+        final Integer cropY = 101;
+        final Integer cropWidth = AUDIO_COVER_WIDTH - 100;
+        final Integer cropHeight = AUDIO_COVER_HEIGHT - 100;
+
+        URL res = getClass().getClassLoader().getResource(AUDIO_COVER_SOURCE_NAME);
+        File file = Paths.get(res.toURI()).toFile();
+        String absolutePathInput = file.getAbsolutePath();
+
+        String absolutePathOutput = absolutePathInput.replaceFirst(AUDIO_COVER_SOURCE_NAME, AUDIO_COVER_TARGET_NAME);
+
+        ResizerApp app = new ResizerApp();
+        app.setInputFile(new File(absolutePathInput));
+        app.setOutputFile(new File(absolutePathOutput));
+        app.setCropParams(cropWidth, cropHeight, cropX, cropY);
+        BadAttributesException generatedException = null;
+        try {
+            app.call();
+        } catch (BadAttributesException e) {
+            generatedException = e;
+        }
+
+        assertEquals("Crop params is out of input image size", generatedException.getMessage());
+        assertEquals(BadAttributesException.class, generatedException.getClass());
+    }
+
+    @Test
+    public void testWrongForman() throws Exception {
+        final String format = "bmp";
+
+        URL res = getClass().getClassLoader().getResource(AUDIO_COVER_SOURCE_NAME);
+        File file = Paths.get(res.toURI()).toFile();
+        String absolutePathInput = file.getAbsolutePath();
+
+        String absolutePathOutput = absolutePathInput.replaceFirst(AUDIO_COVER_SOURCE_NAME, AUDIO_COVER_TARGET_NAME);
+
+        ResizerApp app = new ResizerApp();
+        app.setInputFile(new File(absolutePathInput));
+        app.setOutputFile(new File(absolutePathOutput));
+        app.setOutputFormat(format);
+        BadAttributesException generatedException = null;
+        try {
+            app.call();
+        } catch (BadAttributesException e) {
+            generatedException = e;
+        }
+        assertEquals("Available formats: jpeg png", generatedException.getMessage());
         assertEquals(BadAttributesException.class, generatedException.getClass());
     }
 }

@@ -1,6 +1,7 @@
 package mts.teta.resizer;
 
 import picocli.CommandLine;
+
 import java.io.File;
 import java.util.Stack;
 
@@ -148,7 +149,14 @@ public class ConsoleAttributes {
     }
 
     public void setCropParams(Integer width, Integer height, Integer x, Integer y) {
-        // TODO for test
+        if (cropParams == null)
+            cropParams = new CropParams(width, height, x, y);
+        else {
+            cropParams.width = width;
+            cropParams.height = height;
+            cropParams.x = x;
+            cropParams.y = y;
+        }
     }
 
     public Integer getCropWidth() { return cropParams.width; }
