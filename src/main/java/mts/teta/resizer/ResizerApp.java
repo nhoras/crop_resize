@@ -1,7 +1,6 @@
 package mts.teta.resizer;
 
 import picocli.CommandLine;
-
 import javax.imageio.ImageIO;
 import java.util.concurrent.Callable;
 
