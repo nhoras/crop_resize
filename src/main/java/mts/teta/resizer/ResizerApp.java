@@ -8,7 +8,7 @@ import java.util.concurrent.Callable;
 
 @CommandLine.Command(name = "resizer",
         version = "resizer 0.0.1",
-        headerHeading = "Version: resizer 0.0.1%n",
+        headerHeading = "Version: resizer 0.0.1 https://github.com/nhoras/crop_resize %n",
         header = "Available formats: jpeg png",
         optionListHeading = "Options Settings:%n",
         sortOptions = false,
