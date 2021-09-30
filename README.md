@@ -1,5 +1,5 @@
 ## Сrop-resize
-### 🗓 June 2021
+### 🗓 May 2021
 
 A simple utility for resizing images on the backend: changing advertising banners, previews for music albums and movie covers in low resolution, and others.
 
